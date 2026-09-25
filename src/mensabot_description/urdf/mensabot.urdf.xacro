@@ -1,0 +1,362 @@
+<?xml version='1.0'?>
+
+<robot name="mensabot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:arg name="use_sim" default="false"/>
+  <xacro:arg name="model_only" default="False" />
+
+  <!-- Include Gazebo-specific plugins only in simulation. -->
+  <xacro:if value="$(arg use_sim)">
+    <xacro:include filename="$(find mensabot_description)/urdf/mensabot.gazebo" />
+  </xacro:if>
+  
+  <!-- Load the real ros2_control hardware interface on the physical robot. -->
+  <xacro:unless value="$(arg use_sim)">
+    <xacro:include filename="$(find mensabot_description)/urdf/mensabot.ros2_control_real.xacro" />
+    <xacro:mensabot_ros2_control/>
+  </xacro:unless>
+
+  <xacro:include filename="$(find mensabot_description)/urdf/materials.xacro" />
+
+  <!-- ========================================================= -->
+  <!-- BASE FOOTPRINT -->
+  <!-- ========================================================= -->
+
+  <joint name="base_footprint_joint" type="fixed">
+    <origin xyz="0 0 -0.0325" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="base_footprint"/>
+  </joint>
+
+  <link name="base_footprint">
+    <visual name="center_visual">
+      <geometry>
+        <sphere radius="0.005"/>
+      </geometry>
+      <material name="grey"/>
+    </visual>
+  </link>
+
+
+  <!-- ========================================================= -->
+  <!-- BASE LINK -->
+  <!-- ========================================================= -->
+
+  <link name="base_link">
+
+    <visual name="center_visual">
+      <geometry>
+        <sphere radius="0.005"/>
+      </geometry>
+      <material name="green"/>
+    </visual>
+
+    <!-- CASTER -->
+    <collision name="caster_collision">
+      <origin xyz="-0.12 0 -0.01" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="0.0225"/>
+      </geometry>
+    </collision>
+
+    <visual name="caster_visual">
+      <origin xyz="-0.12 0 -0.01" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="0.0225"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+
+    <!-- Simple stable physics -->
+    <inertial>
+      <mass value="1.0"/>
+      <origin xyz="-0.05 0 0"/>
+      <inertia
+        ixx="0.02"
+        iyy="0.02"
+        izz="0.02"
+        ixy="0"
+        ixz="0"
+        iyz="0"/>
+    </inertial>
+
+  </link>
+
+  <gazebo reference="base_link">
+    <material>Gazebo/Orange</material>
+  </gazebo>
+
+
+  <!-- ========================================================= -->
+  <!-- MAIN BODY -->
+  <!-- ========================================================= -->
+
+  <joint name="body_joint" type="fixed">
+    <origin xyz="-0.08 0 0.025" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="body_link"/>
+  </joint>
+
+  <link name="body_link">
+
+    <visual name="body_visual">
+      <geometry>
+        <box size="0.25 0.20 0.013"/>
+      </geometry>
+      <material name="orange"/>
+    </visual>
+
+    <!-- Collision intentionally disabled for now -->
+
+  </link>
+
+
+  <!-- ========================================================= -->
+  <!-- LEFT WHEEL -->
+  <!-- ========================================================= -->
+
+  <joint name="left_wheel_joint" type="continuous">
+
+    <origin xyz="0 0.121 0" rpy="0 0 0"/>
+
+    <parent link="base_link"/>
+    <child link="left_wheel"/>
+
+    <axis xyz="0 1 0"/>
+
+    <limit
+      effort="100"
+      velocity="30"/>
+
+  </joint>
+
+  <link name="left_wheel">
+
+    <inertial>
+      <mass value="0.5"/>
+      <origin xyz="0 0 0"/>
+
+      <inertia
+        ixx="0.001"
+        iyy="0.001"
+        izz="0.001"
+        ixy="0"
+        ixz="0"
+        iyz="0"/>
+    </inertial>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="1.570796 0 0"/>
+      <geometry>
+        <cylinder
+          radius="0.0325"
+          length="0.025"/>
+      </geometry>
+    </collision>
+
+    <visual name="left_wheel_visual">
+      <origin xyz="0 0 0" rpy="1.570796 0 0"/>
+      <geometry>
+        <cylinder
+          radius="0.0325"
+          length="0.025"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+
+  </link>
+
+  <gazebo reference="left_wheel">
+    <mu1>2.0</mu1>
+    <mu2>2.0</mu2>
+    <material>Gazebo/Blue</material>
+  </gazebo>
+
+
+  <!-- ========================================================= -->
+  <!-- RIGHT WHEEL -->
+  <!-- ========================================================= -->
+
+  <joint name="right_wheel_joint" type="continuous">
+
+    <origin xyz="0 -0.121 0" rpy="0 0 0"/>
+
+    <parent link="base_link"/>
+    <child link="right_wheel"/>
+
+    <axis xyz="0 -1 0"/>
+
+    <limit
+      effort="100"
+      velocity="30"/>
+
+  </joint>
+
+  <link name="right_wheel">
+
+    <inertial>
+      <mass value="0.5"/>
+      <origin xyz="0 0 0"/>
+
+      <inertia
+        ixx="0.001"
+        iyy="0.001"
+        izz="0.001"
+        ixy="0"
+        ixz="0"
+        iyz="0"/>
+    </inertial>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="1.570796 0 0"/>
+      <geometry>
+        <cylinder
+          radius="0.0325"
+          length="0.025"/>
+      </geometry>
+    </collision>
+
+    <visual name="right_wheel_visual">
+      <origin xyz="0 0 0" rpy="1.570796 0 0"/>
+      <geometry>
+        <cylinder
+          radius="0.0325"
+          length="0.025"/>
+      </geometry>
+      <material name="blue"/>      
+    </visual>
+
+  </link>
+
+  <gazebo reference="right_wheel">
+    <mu1>2.0</mu1>
+    <mu2>2.0</mu2>
+    <material>Gazebo/Blue</material>
+  </gazebo>
+
+
+  <!-- ========================================================= -->
+  <!-- IMU -->
+  <!-- ========================================================= -->
+
+  <joint name="imu_joint" type="fixed">
+
+    <origin
+      xyz="0 0 0.05"
+      rpy="0 0 0"/>
+
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+
+  </joint>
+
+  <link name="imu_link">
+
+    <visual name="imu_visual">
+      <geometry>
+        <box size="0.03 0.02 0.01"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+
+  </link>
+
+  <gazebo reference="imu_link">
+    <material>Gazebo/BLACK</material>
+  </gazebo>
+
+
+  <!-- ========================================================= -->
+  <!-- RGB-D CAMERA -->
+  <!-- ========================================================= -->
+
+  <!-- Camera housing / mounting link. The x-axis points forward. -->
+  <joint name="camera_joint" type="fixed">
+    <origin xyz="0.12 0 0.16" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="camera_link"/>
+  </joint>
+
+  <link name="camera_link">
+    <visual name="camera_visual">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.03 0.08 0.03"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+  </link>
+
+  <gazebo reference="camera_link">
+    <material>Gazebo/Blue</material>
+  </gazebo>
+
+  <joint name="camera_optical_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="camera_link"/>
+    <child link="camera_optical_frame"/>
+  </joint>
+  <link name="camera_optical_frame"/>
+  
+
+  <gazebo reference="camera_link">
+    <material>Gazebo/Black</material>
+  </gazebo>
+
+  <!-- ========================================================= -->
+  <!-- LEFT MOTOR -->
+  <!-- ========================================================= -->
+
+  <joint name="left_motor_joint" type="fixed">
+
+    <origin
+      xyz="0 0.07 0"
+      rpy="0 ${pi/2} ${pi/2}"/>
+
+    <parent link="base_link"/>
+    <child link="left_motor_link"/>
+
+  </joint>
+
+  <link name="left_motor_link">
+
+    <visual name="left_motor_visual">
+      <geometry>
+        <cylinder
+          radius="0.01"
+          length="0.06"/>
+      </geometry>
+      <material name="red"/>
+    </visual>
+
+  </link>
+
+  <!-- ========================================================= -->
+  <!-- RIGHT MOTOR -->
+  <!-- ========================================================= -->
+
+  <joint name="right_motor_joint" type="fixed">
+
+    <origin
+      xyz="0 -0.07 0"
+      rpy="0 ${pi/2} ${pi/2}"/>
+
+    <parent link="base_link"/>
+    <child link="right_motor_link"/>
+
+  </joint>
+
+  <link name="right_motor_link">
+
+    <visual name="right_motor_visual">
+      <geometry>
+        <cylinder
+          radius="0.01"
+          length="0.06"/>
+      </geometry>
+      <material name="red"/>
+    </visual>
+
+  </link>
+
+</robot>
