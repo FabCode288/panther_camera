@@ -61,7 +61,8 @@ def generate_launch_description():
         default_value=os.path.join(
             pkg_mensabot_simulation,
             'worlds',
-            'world_room.sdf'
+            #'world_room.sdf'
+            'ionic.sdf'
         ),
         description='Full path to the Gazebo world file'
     )
@@ -251,6 +252,39 @@ def generate_launch_description():
                     'freq' : 30.0}],
     )
 
+    rgbd_odometry_node = Node(
+        package='rtabmap_odom',
+        executable='rgbd_odometry',
+        name='rgbd_odometry',
+        output='screen',
+
+        parameters=[{
+            'frame_id': 'base_link',
+            'odom_frame_id': 'odom_rgbd',
+
+            # Noch kein TF von RTAB-Map
+            'publish_tf': False,
+
+            # Wir geben RGB + Depth + CameraInfo separat hinein
+            'subscribe_rgbd': False,
+
+            # RGB und Depth müssen nicht exakt denselben Timestamp haben
+            'approx_sync': True,
+            'approx_sync_max_interval': 0.02,
+
+            'wait_for_transform': 0.2,
+            'use_sim_time': True,
+        }],
+
+        remappings=[
+            ('rgb/image', '/camera/rgbd/image'),
+            ('depth/image', '/camera/rgbd/depth_image'),
+            ('rgb/camera_info', '/camera/rgbd/camera_info'),
+
+            ('odom', '/odometry/rgbd'),
+        ],
+    )
+
     launchDescriptionObject = LaunchDescription()
 
     launchDescriptionObject.add_action(world_arg)
@@ -263,14 +297,14 @@ def generate_launch_description():
     launchDescriptionObject.add_action(spawn_urdf_node)
     launchDescriptionObject.add_action(gz_bridge_node)
     launchDescriptionObject.add_action(robot_state_publisher_node)
-    launchDescriptionObject.add_action(joint_state_broadcaster_node)
-    launchDescriptionObject.add_action(diff_drive_controller_node)
-    launchDescriptionObject.add_action(ekf_node)
+    #launchDescriptionObject.add_action(joint_state_broadcaster_node)
+    #launchDescriptionObject.add_action(diff_drive_controller_node)
+    #launchDescriptionObject.add_action(ekf_node)
     launchDescriptionObject.add_action(cmd_vel_transform_node)
     #launchDescriptionObject.add_action(safety_control_node)
     #launchDescriptionObject.add_action(simulation_publisher_node)
     #launchDescriptionObject.add_action(laser_scan_merger_node)
     #launchDescriptionObject.add_action(lidar_field_selection_node)
     #launchDescriptionObject.add_action(laser_scan_matcher_node)
-    
+    launchDescriptionObject.add_action(rgbd_odometry_node)
     return launchDescriptionObject
