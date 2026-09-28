@@ -59,14 +59,14 @@
               <horizontal_fov>1.21</horizontal_fov>
 
               <image>
-                  <width>320</width>
-                  <height>240</height>
+                  <width>640</width>
+                  <height>480</height>
                   <format>R8G8B8</format>
               </image>
 
               <clip>
                   <near>0.10</near>
-                  <far>10.0</far>
+                  <far>6.0</far>
               </clip>
               <optical_frame_id>camera_optical_frame</optical_frame_id>
           </camera>

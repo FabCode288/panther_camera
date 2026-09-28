@@ -1,0 +1,29 @@
+rtabmap:
+  ros__parameters:
+
+    use_sim_time: true
+
+    frame_id: base_link
+    odom_frame_id: odom
+
+    subscribe_rgb: true
+    subscribe_depth: true
+    subscribe_scan: false
+
+    approx_sync: true
+    approx_sync_max_interval: 0.1
+
+    queue_size: 10
+
+    database_path: "~/.ros/rtabmap.db"
+
+    RGBD/NeighborLinkRefining: "true"
+    RGBD/ProximityBySpace: "true"
+
+    Vis/MinInliers: "15"
+    Vis/MaxFeatures: "1000"
+
+    Reg/Strategy: "0"
+
+    Grid/FromDepth: "true"
+    Grid/3D: "true"

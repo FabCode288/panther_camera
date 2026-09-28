@@ -95,6 +95,50 @@ def generate_launch_description():
         ],
     )
 
+    rtabmap = Node(
+        package='rtabmap_slam',
+        executable='rtabmap',
+        name='rtabmap',
+        output='screen',
+
+        parameters=[{
+            'use_sim_time': True,
+
+            'frame_id': 'base_link',
+            'odom_frame_id': 'odom',
+
+            'subscribe_rgb': True,
+            'subscribe_depth': True,
+            'subscribe_scan': False,
+
+            'approx_sync': True,
+            'approx_sync_max_interval': 0.1,
+
+            'queue_size': 10,
+
+            'database_path': '~/.ros/rtabmap.db',
+
+            'RGBD/NeighborLinkRefining': 'true',
+            'RGBD/ProximityBySpace': 'true',
+
+            'Vis/MinInliers': '15',
+            'Vis/MaxFeatures': '1000',
+
+            'Grid/FromDepth': 'true',
+            'Grid/3D': 'false',
+
+            'Grid/MaxGroundHeight': '0.05',
+            'Grid/MaxObstacleHeight': '0.30',
+        }],
+
+        remappings=[
+            ('rgb/image', '/camera/rgbd/image'),
+            ('depth/image', '/camera/rgbd/depth_image'),
+            ('rgb/camera_info', '/camera/rgbd/camera_info'),
+            ('odom', '/odometry/filtered'),
+        ]
+    )
+
     launchDescriptionObject = LaunchDescription()
     
     
@@ -103,4 +147,5 @@ def generate_launch_description():
     launchDescriptionObject.add_action(diff_drive_controller_node)
     launchDescriptionObject.add_action(ekf_node)
     launchDescriptionObject.add_action(rgbd_odometry_node)
+    launchDescriptionObject.add_action(rtabmap)
     return launchDescriptionObject
