@@ -306,5 +306,5 @@ def generate_launch_description():
     #launchDescriptionObject.add_action(laser_scan_merger_node)
     #launchDescriptionObject.add_action(lidar_field_selection_node)
     #launchDescriptionObject.add_action(laser_scan_matcher_node)
-    launchDescriptionObject.add_action(rgbd_odometry_node)
+    #launchDescriptionObject.add_action(rgbd_odometry_node)
     return launchDescriptionObject

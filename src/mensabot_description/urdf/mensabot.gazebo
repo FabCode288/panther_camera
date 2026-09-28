@@ -68,7 +68,9 @@
                   <near>0.10</near>
                   <far>10.0</far>
               </clip>
+              <optical_frame_id>camera_optical_frame</optical_frame_id>
           </camera>
+          <gz_frame_id>camera_link</gz_frame_id>
       </sensor>
   </gazebo>
   

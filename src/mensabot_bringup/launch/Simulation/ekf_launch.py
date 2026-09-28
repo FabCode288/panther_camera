@@ -62,6 +62,39 @@ def generate_launch_description():
              ]
     )    
 
+    rgbd_odometry_node = Node(
+        package='rtabmap_odom',
+        executable='rgbd_odometry',
+        name='rgbd_odometry',
+        output='screen',
+
+        parameters=[{
+            'frame_id': 'base_link',
+            'odom_frame_id': 'odom_rgbd',
+
+            # Noch kein TF von RTAB-Map
+            'publish_tf': False,
+
+            # Wir geben RGB + Depth + CameraInfo separat hinein
+            'subscribe_rgbd': False,
+
+            # RGB und Depth müssen nicht exakt denselben Timestamp haben
+            'approx_sync': True,
+            'approx_sync_max_interval': 0.02,
+
+            'wait_for_transform': 0.2,
+            'use_sim_time': True,
+        }],
+
+        remappings=[
+            ('rgb/image', '/camera/rgbd/image'),
+            ('depth/image', '/camera/rgbd/depth_image'),
+            ('rgb/camera_info', '/camera/rgbd/camera_info'),
+
+            ('odom', '/odometry/rgbd'),
+        ],
+    )
+
     launchDescriptionObject = LaunchDescription()
     
     
@@ -69,5 +102,5 @@ def generate_launch_description():
     launchDescriptionObject.add_action(joint_state_broadcaster_node)
     launchDescriptionObject.add_action(diff_drive_controller_node)
     launchDescriptionObject.add_action(ekf_node)
-    
+    launchDescriptionObject.add_action(rgbd_odometry_node)
     return launchDescriptionObject
