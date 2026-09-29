@@ -308,14 +308,14 @@ def generate_launch_description():
             delayed_diff_drive_controller,
             ekf_node,
             cmd_vel_transform_node,
-            laser_scan_merger_node,
-            imu_device_node,
-            imu_filter_node,
-            scanner_front_node,
-            scanner_rear_node,
-            lidar_field_selection_node,
-            laser_scan_matcher_node,
-            delayed_safety_control_node
+            #laser_scan_merger_node,
+            #imu_device_node,
+            #imu_filter_node,
+            #scanner_front_node,
+            #scanner_rear_node,
+            #lidar_field_selection_node,
+            #laser_scan_matcher_node,
+            #delayed_safety_control_node
         ]
     )
 

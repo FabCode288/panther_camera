@@ -1,19 +1,17 @@
 /**
  * @file mensabot_hardware.hpp
- * @brief Declaration of the Mensabot ros2_control hardware interface.
- *
- * Defines the communication protocol, packet structures and the
- * MensabotHardware class implementing the ros2_control
- * hardware_interface::SystemInterface.
+ * @brief Declaration of the MensaBot ros2_control hardware interface.
  */
 
 #ifndef MENSABOT_HARDWARE__MENSABOT_HARDWARE_HPP_
 #define MENSABOT_HARDWARE__MENSABOT_HARDWARE_HPP_
 
 #include <atomic>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <sensor_msgs/msg/imu.hpp>
 
 #include "hardware_interface/handle.hpp"
 #include "hardware_interface/hardware_info.hpp"
@@ -23,12 +21,15 @@
 #include "rclcpp/macros.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/state.hpp"
-
 #include "std_msgs/msg/bool.hpp"
 
 // ============================================================================
 // COMMUNICATION PROTOCOL
 // ============================================================================
+
+constexpr uint8_t PACKET_HEADER_1 = 0xAA;
+constexpr uint8_t PACKET_HEADER_2 = 0x55;
+constexpr size_t PACKET_PAYLOAD_SIZE = 27;
 
 #pragma pack(push, 1)
 
@@ -36,18 +37,44 @@ struct Packet
 {
   uint8_t header1;
   uint8_t header2;
-
   uint8_t type;
-
-  int16_t value1;
-  int16_t value2;
-
+  uint8_t payload[PACKET_PAYLOAD_SIZE];
   uint16_t checksum;
+};
+
+struct MotorCommand
+{
+  int16_t velocity_L;
+  int16_t velocity_R;
+};
+
+struct MotorFeedback
+{
+  uint32_t timestamp_us;
+  float position_L;
+  float position_R;
+  float omega_L;
+  float omega_R;
+};
+
+struct ImuData
+{
+  float accel_x;
+  float gyro_z;
+};
+
+struct DebugCmd
+{
+  int16_t left;
+  int16_t right;
 };
 
 #pragma pack(pop)
 
-static_assert(sizeof(Packet) == 9, "Packet size invalid");
+static_assert(sizeof(Packet) == 32, "Packet size must be exactly 32 bytes");
+static_assert(sizeof(MotorCommand) == 4, "MotorCommand size invalid");
+static_assert(sizeof(MotorFeedback) == 20, "MotorFeedback size invalid");
+static_assert(sizeof(DebugCmd) == 4, "DebugCmd size invalid");
 
 union PacketBuffer
 {
@@ -57,163 +84,91 @@ union PacketBuffer
 
 enum PacketType : uint8_t
 {
-  PKT_PING  = 1,
-  PKT_READY = 2,
-  PKT_HB    = 3,
-
-  PKT_CMD   = 10,
-
-  PKT_ESTOP = 20,
-  PKT_RESET = 21
+  PKT_PING           = 1,
+  PKT_READY          = 2,
+  PKT_HB             = 3,
+  PKT_CMD            = 10,
+  PKT_ESTOP          = 20,
+  PKT_RESET          = 21,
+  PKT_MOTOR_FEEDBACK = 30,
+  PKT_IMU_DATA       = 31,
+  PKT_DEBUG_CMD      = 40
 };
-
-// ============================================================================
-// HARDWARE INTERFACE
-// ============================================================================
 
 namespace mensabot_hardware
 {
 
-/**
- * @brief Hardware interface implementation for the Mensabot platform.
- */
-
-/**
- * @brief ros2_control hardware interface for the Mensabot platform.
- *
- * This class provides the connection between the ROS 2 control framework
- * and the Arduino-based motor controller. It manages serial communication,
- * controller state transitions, heartbeat monitoring and command exchange.
- */
 class MensabotHardware : public hardware_interface::SystemInterface
 {
 public:
   RCLCPP_SHARED_PTR_DEFINITIONS(MensabotHardware)
 
-  /**
-   * @brief Initialize the hardware interface.
-   */
   hardware_interface::CallbackReturn on_init(
     const hardware_interface::HardwareInfo & info) override;
 
-  /**
-   * @brief Export wheel state interfaces.
-   */
   std::vector<hardware_interface::StateInterface>
   export_state_interfaces() override;
 
-  /**
-   * @brief Export wheel command interfaces.
-   */
   std::vector<hardware_interface::CommandInterface>
   export_command_interfaces() override;
 
-  /**
-   * @brief Activate the hardware interface.
-   */
   hardware_interface::CallbackReturn on_activate(
     const rclcpp_lifecycle::State & previous_state) override;
 
-  /**
-   * @brief Deactivate the hardware interface.
-   */
   hardware_interface::CallbackReturn on_deactivate(
     const rclcpp_lifecycle::State & previous_state) override;
 
-  /**
-   * @brief Read data from the hardware interface.
-   */
   hardware_interface::return_type read(
     const rclcpp::Time & time,
     const rclcpp::Duration & period) override;
 
-  /**
-   * @brief Write commands to the hardware interface.
-   */
   hardware_interface::return_type write(
     const rclcpp::Time & time,
     const rclcpp::Duration & period) override;
 
 private:
+  int serial_fd_ = -1;
+  std::string port_ = "/dev/ttyACM0";
 
-  // ==========================================================================
-  // SERIAL COMMUNICATION
-  // ==========================================================================
-
-  int serial_fd_;
-
-  std::string port_ = "/dev/arduino";
-
-  PacketBuffer rx_buffer_;
-
+  PacketBuffer rx_buffer_{};
   size_t rx_index_ = 0;
 
-  /**
-   * @brief Send a communication packet.
-   */
-  void send_packet(
+  bool send_packet(
     uint8_t type,
-    int16_t value1 = 0,
-    int16_t value2 = 0);
+    const uint8_t * payload = nullptr,
+    uint8_t length = 0);
 
-  /**
-   * @brief Read a packet from the serial interface.
-   */
   bool read_packet(Packet & packet);
 
-  /**
-   * @brief Calculate the packet checksum.
-   */
-  uint16_t calculate_checksum(
-    const Packet & packet);
+  uint16_t calculate_checksum(const Packet & packet);
 
-  // ==========================================================================
-  // ROS COMMUNICATION
-  // ==========================================================================
+  void process_packet(const Packet & packet);
 
   rclcpp::Node::SharedPtr node_;
-
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr estop_sub_;
-
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr connected_pub_;
-
-  // ==========================================================================
-  // HARDWARE DATA
-  // ==========================================================================
+  rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_;
 
   std::vector<double> hw_positions_;
-
   std::vector<double> hw_velocities_;
-
   std::vector<double> hw_commands_;
 
-  // ==========================================================================
-  // STATE FLAGS
-  // ==========================================================================
+  MotorFeedback latest_feedback_{};
+  bool feedback_received_ = false;
 
   bool connected_ = false;
-
   bool ready_ = false;
-
   bool active_ = false;
-
   std::atomic<bool> estop_{false};
-
   bool estop_sent_ = false;
 
-  // ==========================================================================
-  // TIMING
-  // ==========================================================================
+  // Timing is measured only relative to the previous read/write cycle.
+  // No subtraction of rclcpp::Time objects is used.
+  double time_since_last_message_ = 0.0;
+  double time_since_last_send_ = 0.0;
 
-  rclcpp::Time last_msg_time_;
-
-  rclcpp::Time last_send_time_;
-
-  bool timing_initialized_ = false;
-
-  double heartbeat_timeout_ = 1.0;
-
-  double send_period_ = 0.02;  // 50 Hz
+  double heartbeat_timeout_ = 0.5;
+  double send_period_ = 0.02;
 };
 
 }  // namespace mensabot_hardware
