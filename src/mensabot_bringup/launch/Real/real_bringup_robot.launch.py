@@ -129,32 +129,6 @@ def generate_launch_description():
         output='screen'
     )
 
-    safety_control_node = Node(
-        package='mensabot_utils',
-        executable='safety_control_node',
-        name='safety_control_node',
-        parameters=[{'simulation': False}],
-        output='screen'
-    )
-
-    laser_scan_merger_node = ComposableNodeContainer(
-        package="rclcpp_components",
-        executable="component_container",
-        name="component_manager_node",
-        namespace="",
-        composable_node_descriptions=[
-            ComposableNode(
-                package="laser_scan_merger",
-                plugin="util::LaserScanMerger",
-                name="laser_scan_merger_node",
-                parameters=[
-                    os.path.join(pkg_laser_scan_merger, 'config', 'laser_merger_param.yaml'),
-                ]
-            )
-        ],
-        output="screen"
-    )
-
     imu_filter_config = os.path.join(              
         get_package_share_directory('imu_ros2_device'),
         'config',
@@ -188,106 +162,6 @@ def generate_launch_description():
         )
     )
 
-    scanner_front_node=Node(
-        package="sick_safetyscanners2",
-        executable="sick_safetyscanners2_node",
-        name="sick_safetyscanners2_node_front",
-        output="screen",
-        emulate_tty=True,
-        remappings=[('/scan', '/lidars/front/scan'), ('/extended_scan', '/lidars/front/extended_scan'), ('/output_paths', '/lidars/front/output_paths'), ('/raw_data', '/lidars/front/raw_data')], 
-        parameters=[
-            {"frame_id": "scan_front_link",
-                "sensor_ip": "192.168.0.11",
-                "host_ip": "192.168.0.100",
-                "interface_ip": "0.0.0.0",
-                "host_udp_port": 6060,
-                "channel": 0,
-                "channel_enabled": True,
-                "skip": 0,
-                "angle_start": -2.4,
-                "angle_end": 2.4,
-                "time_offset": 0.0,
-                "general_system_state": True,
-                "derived_settings": True,
-                "measurement_data": True,
-                "intrusion_data": True,
-                "application_io_data": True,
-                "use_persistent_config": False,
-                "min_intensities": 0.0}
-        ]
-    )
-
-    scanner_rear_node=Node(
-        package="sick_safetyscanners2",
-        executable="sick_safetyscanners2_node",
-        name="sick_safetyscanners2_node_rear",
-        output="screen",
-        emulate_tty=True,
-        remappings=[('/scan', '/lidars/rear/scan'), ('/extended_scan', '/lidars/rear/extended_scan'), ('/output_paths', '/lidars/rear/output_paths'), ('/raw_data', '/lidars/rear/raw_data')], 
-        parameters=[
-            {"frame_id": "scan_rear_link",
-                "sensor_ip": "192.168.0.10",
-                "host_ip": "192.168.0.100",
-                "interface_ip": "0.0.0.0",
-                "host_udp_port": 6061,
-                "channel": 0,
-                "channel_enabled": True,
-                "skip": 0,
-                "angle_start": -2.4,
-                "angle_end": 2.4,
-                "time_offset": 0.0,
-                "general_system_state": True,
-                "derived_settings": True,
-                "measurement_data": True,
-                "intrusion_data": True,
-                "application_io_data": True,
-                "use_persistent_config": False,
-                "min_intensities": 0.0}
-        ]
-    )
-
-    lidar_reset = ExecuteProcess(
-        cmd=['python3',
-        '-u',
-        '/home/student/ros2_mensabot_ws/src/mensabot_utils/mensabot_utils/lidar_reset.py'],
-        output='screen'
-    )
-
-    lidar_field_selection_node = Node(
-        package='mensabot_utils',
-        executable='lidar_field_selection_node',
-        name='lidar_field_selection_node',
-        parameters=[{'simulation': False}],
-        output='screen'
-    )
-
-    laser_scan_matcher_node = Node(
-                package='rf2o_laser_odometry',
-                executable='rf2o_laser_odometry_node',
-                name='rf2o_laser_odometry',
-                output='screen',
-                parameters=[{
-                    'laser_scan_topic' : '/merged_scan',
-                    'odom_topic' : '/odom_rf2o',
-                    'publish_tf' : False,
-                    'base_frame_id' : 'base_link',
-                    'odom_frame_id' : 'odom',
-                    'init_pose_from_topic' : '',
-                    'freq' : 15.0}],
-    )
-
-    delayed_safety_control_node = RegisterEventHandler(
-        OnProcessStart(
-            target_action=lidar_field_selection_node,
-            on_start=[
-                TimerAction(
-                    period=1.0,
-                    actions=[safety_control_node]
-                )
-            ]
-        )
-    )
-
     normal_startup = GroupAction(
         actions=[
             controller_manager_node,
@@ -296,46 +170,13 @@ def generate_launch_description():
             delayed_diff_drive_controller,
             ekf_node,
             cmd_vel_transform_node,
-            #laser_scan_merger_node,
-            #imu_device_node,
-            #imu_filter_node,
-            #scanner_front_node,
-            #scanner_rear_node,
-            #lidar_field_selection_node,
-            #laser_scan_matcher_node,
-            #delayed_safety_control_node
         ]
-    )
-
-    delayed_startup_after_reset = RegisterEventHandler(
-        OnProcessExit(
-            target_action=lidar_reset,
-            on_exit=[
-                normal_startup
-            ]
-        )
     )
 
     launchDescriptionObject = LaunchDescription()
 
     launchDescriptionObject.add_action(model_arg)
     launchDescriptionObject.add_action(lidar_reset_arg)
-
-    # ---------------------------------------
-    # Start with reset
-    # ---------------------------------------
-
-    launchDescriptionObject.add_action(
-        GroupAction(
-            condition=IfCondition(
-                LaunchConfiguration('lidar_reset')
-            ),
-            actions=[
-                lidar_reset,
-                delayed_startup_after_reset
-            ]
-        )
-    )
 
     # ---------------------------------------
     # Start without reset
