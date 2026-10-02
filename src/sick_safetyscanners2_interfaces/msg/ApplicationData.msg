@@ -1,2 +1,0 @@
-ApplicationInputs inputs
-ApplicationOutputs outputs

@@ -1,6 +1,0 @@
-DataHeader header
-DerivedValues derived_values
-GeneralSystemState general_system_state
-MeasurementData measurement_data
-IntrusionData intrusion_data
-ApplicationData application_data
