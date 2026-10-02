@@ -45,7 +45,6 @@ def generate_launch_description():
     pkg_mensabot_description = get_package_share_directory('mensabot_description')
     pkg_mensabot_bringup = get_package_share_directory('mensabot_bringup')
     pkg_mensabot_navigation = get_package_share_directory('mensabot_navigation')    
-    pkg_laser_scan_merger = get_package_share_directory('laser_scan_merger')
     pkg_mensabot_hardware = get_package_share_directory('mensabot_hardware')
     pkg_mensabot_utils = get_package_share_directory('mensabot_utils')
 
