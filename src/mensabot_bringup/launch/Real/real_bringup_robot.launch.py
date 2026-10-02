@@ -48,10 +48,6 @@ def generate_launch_description():
     pkg_mensabot_hardware = get_package_share_directory('mensabot_hardware')
     pkg_mensabot_utils = get_package_share_directory('mensabot_utils')
 
-    package_path = get_package_share_path('imu_ros2_device')
-    default_rviz_config_path = package_path / 'rviz/ybimu.rviz'
-    print("config path:", default_rviz_config_path)
-
 
     model_arg = DeclareLaunchArgument(
         'model',
@@ -157,13 +153,6 @@ def generate_launch_description():
             )
         ],
         output="screen"
-    )
-
-    imu_device_node = Node(
-        package='imu_ros2_device',
-        executable='ybimu_driver',
-        name=   'imu_device_node',
-        output='screen',
     )
 
     imu_filter_config = os.path.join(              
