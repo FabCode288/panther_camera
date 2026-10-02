@@ -473,6 +473,42 @@ void MensabotHardware::process_packet(const Packet & packet)
 
       msg.linear_acceleration.x = static_cast<double>(imu.accel_x);
       msg.angular_velocity.z = static_cast<double>(imu.gyro_z);
+          
+      // --------------------------------------------------
+      // Kovarianzen
+      // --------------------------------------------------
+
+      // Orientierung nicht vorhanden
+      msg.orientation_covariance[0] = -1.0;
+
+      // Gyroskop:
+      // Nur Z wird gemessen
+      msg.angular_velocity_covariance[0] = 0.0;
+      msg.angular_velocity_covariance[1] = 0.0;
+      msg.angular_velocity_covariance[2] = 0.0;
+
+      msg.angular_velocity_covariance[3] = 0.0;
+      msg.angular_velocity_covariance[4] = 0.0;
+      msg.angular_velocity_covariance[5] = 0.0;
+
+      msg.angular_velocity_covariance[6] = 0.0;
+      msg.angular_velocity_covariance[7] = 0.0;
+
+      // Varianz von gyro_z
+      msg.angular_velocity_covariance[8] = 0.01;
+
+      // Beschleunigung:
+      msg.linear_acceleration_covariance[0] = 0.01;
+      msg.linear_acceleration_covariance[1] = 0.0;
+      msg.linear_acceleration_covariance[2] = 0.0;
+
+      msg.linear_acceleration_covariance[3] = 0.0;
+      msg.linear_acceleration_covariance[4] = 0.01;
+      msg.linear_acceleration_covariance[5] = 0.0;
+
+      msg.linear_acceleration_covariance[6] = 0.0;
+      msg.linear_acceleration_covariance[7] = 0.0;
+      msg.linear_acceleration_covariance[8] = 0.01;
 
       imu_pub_->publish(msg);
 
