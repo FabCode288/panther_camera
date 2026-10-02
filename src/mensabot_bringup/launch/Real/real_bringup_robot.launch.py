@@ -129,20 +129,6 @@ def generate_launch_description():
         output='screen'
     )
 
-    imu_filter_config = os.path.join(              
-        get_package_share_directory('imu_ros2_device'),
-        'config',
-        'imu_filter_param.yaml'
-    )
-
-    imu_filter_node = Node(
-        package='imu_filter_madgwick',
-        executable='imu_filter_madgwick_node',
-        name='imu_filter_node',
-        output='screen',
-        parameters=[imu_filter_config]
-    )
-
     delayed_joint_state_broadcaster = RegisterEventHandler(
         OnProcessStart(
             target_action=controller_manager_node,
